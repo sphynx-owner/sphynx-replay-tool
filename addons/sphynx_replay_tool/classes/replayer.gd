@@ -66,7 +66,8 @@ func unload_replay() -> void:
 		
 		child.queue_free()
 	
-	animation_player.remove_animation_library("")
+	if animation_player.has_animation_library(""):
+		animation_player.remove_animation_library("")
 	
 	_scene_record_setter_gate = true
 	_current_scene_record = null
