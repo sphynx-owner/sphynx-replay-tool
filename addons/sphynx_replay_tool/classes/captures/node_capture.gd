@@ -33,15 +33,19 @@ static func recreate_initial_state(initial_state: Variant) -> void:
 
 
 static func build_state_animation(animation: Animation, node_record: NodeRecord) -> void:
-	var visibility_track: int = animation.find_track(NodePath(":visibility"), Animation.TYPE_VALUE)
+	var visibility_track: int = animation.find_track(NodePath(":visible"), Animation.TYPE_VALUE)
 	
 	if visibility_track == -1:
 		visibility_track = animation.add_track(Animation.TYPE_VALUE)
 		
-		animation.track_set_path(visibility_track, NodePath(":visibility"))
+		animation.track_set_path(visibility_track, NodePath(":visible"))
 	
-	animation.track_insert_key(visibility_track, 0.0, false)
+	animation.track_set_interpolation_type(visibility_track, Animation.INTERPOLATION_NEAREST)
 	
-	animation.track_insert_key(visibility_track, node_record.spawn_time, true)
+	if !is_equal_approx(node_record.spawn_time, 0.0):
+		animation.track_insert_key(visibility_track, 0.0, false)
+		
+		animation.track_insert_key(visibility_track, node_record.spawn_time, true)
 	
-	animation.track_insert_key(visibility_track, node_record.despawn_time, false)
+	if !is_equal_approx(node_record.despawn_time, animation.length):
+		animation.track_insert_key(visibility_track, node_record.despawn_time, false)

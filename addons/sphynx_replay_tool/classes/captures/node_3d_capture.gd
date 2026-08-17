@@ -18,8 +18,8 @@ static func build_state_animation(animation: Animation, node_record: NodeRecord)
 	var rotation_track: int = animation.add_track(Animation.TrackType.TYPE_ROTATION_3D)
 	var scale_track: int = animation.add_track(Animation.TrackType.TYPE_SCALE_3D)
 	
-	for i in node_record.frame_times.size():
-		var time: float = node_record.frame_times[i]
+	for i in node_record.times.size():
+		var time: float = node_record.times[i]
 		
 		var transform: Transform3D = node_record.states[i]
 		

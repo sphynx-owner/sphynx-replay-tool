@@ -27,12 +27,26 @@ var current_recording: SceneRecord
 var current_state: State = State.NONE
 
 
+@export_tool_button("test_replay") var test_replay = _test_replay
+
+@export_tool_button("test_stop_replay") var test_stop_replay = _test_stop_replay
+
+
+func _test_replay() -> void:
+	_on_load_button_pressed()
+	
+	_start_replay()
+
+
+func _test_stop_replay() -> void:
+	_stop_replay()
+
+
 func _ready() -> void:
 	record_button.toggled.connect(_on_record_button_toggled)
 	replay_button.toggled.connect(_on_replay_button_toggled)
 	save_button.pressed.connect(_on_save_button_pressed)
 	load_button.pressed.connect(_on_load_button_pressed)
-	replayer.replay_finished.connect(func(): replay_button.button_pressed = false)
 	
 	recorder.recording_finished.connect(_on_recording_finished)
 

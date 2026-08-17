@@ -2,8 +2,6 @@
 class_name Replayer
 extends Node
 
-signal replay_finished
-
 const REPLAY_ANIMATION: StringName = "replay_animation"
 
 @export var animation_player: AnimationPlayer
@@ -19,10 +17,6 @@ var _current_scene_record: SceneRecord:
 		_current_scene_record = value
 
 var _scene_record_setter_gate: bool = false
-
-
-func _ready() -> void:
-	animation_player.animation_finished.connect(replay_finished.emit.unbind(1))
 
 
 func load_replay(scene_record: SceneRecord) -> void:
