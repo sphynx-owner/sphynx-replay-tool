@@ -65,13 +65,13 @@ func start_recording():
 
 
 func create_subtree_records_recursive(node: Node) -> void:
-	create_node_record(node)
+	create_node_record(node, true)
 	
 	for child in node.get_children():
 		create_subtree_records_recursive(child)
 
 
-func create_node_record(node: Node) -> void:
+func create_node_record(node: Node, pre_existing := false) -> void:
 	assert(!!settings, "scene record must have valid settings in order to do anything")
 	assert(state == State.RECORDING, "this scene record is not recording")
 	
@@ -86,6 +86,17 @@ func create_node_record(node: Node) -> void:
 	var new_node_record: NodeRecord = NodeRecord.create(self, node)
 	
 	new_node_record.capture_node_initial_state()
+	
+	# HACK @sphynx-owner: I am doing this because I can then safely
+	# assume that objects that already existed before the recording
+	# started have their spawn time at 0.0, which I can then check with
+	# is_equal_approx to prevent adding unnecessary visibility keyframes
+	# at the start of their animations.
+	# The reason this does not just work with the ReplayUtils times,
+	# even though it technically should, both times are set from the
+	# same call stack, is probably due to lag between calls.
+	if pre_existing:
+		new_node_record.spawn_time = 0.0
 	
 	_active_node_records[node] = new_node_record
 	

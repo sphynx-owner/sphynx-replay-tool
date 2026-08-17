@@ -20,6 +20,8 @@ var _scene_record_setter_gate: bool = false
 
 
 func load_replay(scene_record: SceneRecord) -> void:
+	unload_replay()
+	
 	_scene_record_setter_gate = true
 	_current_scene_record = scene_record
 	_scene_record_setter_gate = false
@@ -42,6 +44,8 @@ func load_replay(scene_record: SceneRecord) -> void:
 		get_parent().add_child(recreated_node)
 		
 		var temp_animation: Animation = Animation.new()
+		
+		temp_animation.length = _current_scene_record.record_duration
 		
 		record.build_state_animation(temp_animation)
 		

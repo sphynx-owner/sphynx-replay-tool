@@ -42,10 +42,10 @@ static func build_state_animation(animation: Animation, node_record: NodeRecord)
 	
 	animation.track_set_interpolation_type(visibility_track, Animation.INTERPOLATION_NEAREST)
 	
+	animation.track_insert_key(visibility_track, node_record.spawn_time, true)
+	
 	if !is_equal_approx(node_record.spawn_time, 0.0):
 		animation.track_insert_key(visibility_track, 0.0, false)
-		
-		animation.track_insert_key(visibility_track, node_record.spawn_time, true)
 	
 	if !is_equal_approx(node_record.despawn_time, animation.length):
 		animation.track_insert_key(visibility_track, node_record.despawn_time, false)
