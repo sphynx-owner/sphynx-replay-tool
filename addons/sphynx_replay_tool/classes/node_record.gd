@@ -1,123 +1,82 @@
+@tool
 class_name NodeRecord
 extends Resource
+## A recording of a single node in a repaly.
+
+## The class used to capture this node.
+@export_storage var CaptureType: GDScript
+
+@export_storage var node_capture: Variant
 
 # The initial state of a node, used to recreate it
 @export_storage var node_initial_state: Variant
 
-@export_storage var spawn_frame: int = 0
-@export_storage var despawn_frame: int = 0
+@export_storage var spawn_time: float = 0
+@export_storage var despawn_time: float = 0
+
+@export_storage var times: Array[float]
 
 ## Records of all important information in a node's life
 ## ordered by the frame in which they were captured
-@export_storage var recorded_info: Array[Variant]
+@export_storage var states: Array[Variant]
 
-@export_storage var recorded_transform_info: PackedByteArray
-
-
-static func can_record_node(node: Node) -> bool:
-	return node is MeshInstance3D or node is WorldEnvironment or node is Light3D
+var _scene_record: SceneRecord
+var _node: Node
+var _is_recording: bool = false
 
 
-func capture_node_initial_state(node: Node, current_frame: int) -> void:
-	if node is WorldEnvironment or node is Light3D:
-		node_initial_state = WorldEnvironmentInitialState.capture_node_initial_state(node)
-	if node is MeshInstance3D:
-		node_initial_state = MeshInstance3DInitialState.capture_node_initial_state(node)
+static func create(scene_record: SceneRecord, node: Node) -> NodeRecord:
+	return NodeRecord.new(scene_record.settings.get_capture_type(node), scene_record, node, true)
+
+
+func _init(p_capture_type: GDScript = null, p_scene_record: SceneRecord = null, p_node: Node = null, p_is_recording := false) -> void:
+	CaptureType = p_capture_type
+	_scene_record = p_scene_record
+	_node = p_node
+	_is_recording = p_is_recording
+
+
+func capture_node_initial_state() -> void:
+	assert(_is_recording, "node record is not actively recording")
 	
-	spawn_frame = current_frame
+	node_capture = CaptureType.capture_node(_node)
+	node_initial_state = CaptureType.capture_initial_state(_node)
+	spawn_time = _scene_record.get_local_time()
 
 
-func capture_node_frame_info(node: Node) -> void:
-	if node is WorldEnvironment:
+func capture_node_frame_info() -> void:
+	assert(_is_recording, "node record is not actively recording")
+	
+	var state: Variant = CaptureType.capture_state(_node)
+	
+	if state == null:
 		return
 	
-	capture_node_transform(node)
+	states.append(state)
 	
-	#if node is Node3D:
-		#recorded_info.append(Node3DFrameInfo.capture_node_frame_info(node))
+	times.append(_scene_record.get_local_time())
 
 
-func close_node_record(current_frame: int) -> void:
-	despawn_frame = current_frame
+func close_node_record() -> void:
+	assert(_is_recording, "node record is not actively recording")
+	
+	despawn_time = _scene_record.get_local_time()
 
 
 func recreate_node() -> Node:
-	if node_initial_state is PackedScene:
-		return WorldEnvironmentInitialState.recreate_node(node_initial_state)
-	if node_initial_state is Array[Variant]:
-		return MeshInstance3DInitialState.recreate_node(node_initial_state)
+	assert(!_is_recording, "node record is actively recording")
 	
-	return null
+	assert(node_capture != null, "initial state is null")
+	
+	return CaptureType.recreate_node(node_capture)
 
 
-func recreate_frame(node: Node, current_frame: int) -> void:
-	if node is WorldEnvironment:
+func build_state_animation(animation: Animation) -> void:
+	assert(!_is_recording, "node record is actively recording")
+	
+	if node_initial_state == null:
 		return
 	
-	recreate_node_transform(node, current_frame)
-	#Node3DFrameInfo.recreate_frame(node, recorded_info[current_frame - spawn_frame])
-
-
-const FLOAT_SIZE := 2
-
-const TRANSFORM_SIZE := 12
-
-
-func capture_node_transform(node: Node) -> void:
-	var offset: int = recorded_transform_info.size()
+	animation.length = despawn_time
 	
-	recorded_transform_info.resize(offset + FLOAT_SIZE * TRANSFORM_SIZE)
-	
-	var global_transform: Transform3D = node.global_transform
-	
-	recorded_transform_info.encode_half(offset, global_transform.basis.x.x)
-	offset += FLOAT_SIZE
-	recorded_transform_info.encode_half(offset, global_transform.basis.x.y)
-	offset += FLOAT_SIZE
-	recorded_transform_info.encode_half(offset, global_transform.basis.x.z)
-	offset += FLOAT_SIZE
-	recorded_transform_info.encode_half(offset, global_transform.basis.y.x)
-	offset += FLOAT_SIZE
-	recorded_transform_info.encode_half(offset, global_transform.basis.y.y)
-	offset += FLOAT_SIZE
-	recorded_transform_info.encode_half(offset, global_transform.basis.y.z)
-	offset += FLOAT_SIZE
-	recorded_transform_info.encode_half(offset, global_transform.basis.z.x)
-	offset += FLOAT_SIZE
-	recorded_transform_info.encode_half(offset, global_transform.basis.z.y)
-	offset += FLOAT_SIZE
-	recorded_transform_info.encode_half(offset, global_transform.basis.z.z)
-	offset += FLOAT_SIZE
-	recorded_transform_info.encode_half(offset, global_transform.origin.x)
-	offset += FLOAT_SIZE
-	recorded_transform_info.encode_half(offset, global_transform.origin.y)
-	offset += FLOAT_SIZE
-	recorded_transform_info.encode_half(offset, global_transform.origin.z)
-
-
-
-func recreate_node_transform(node: Node, current_frame: int) -> void:
-	var offset: int = (current_frame - spawn_frame) * FLOAT_SIZE * TRANSFORM_SIZE
-	
-	node.global_transform = Transform3D(
-		Vector3(
-			recorded_transform_info.decode_half(offset + 0 * FLOAT_SIZE),
-			recorded_transform_info.decode_half(offset + 1 * FLOAT_SIZE),
-			recorded_transform_info.decode_half(offset + 2 * FLOAT_SIZE),
-		),
-		Vector3(
-			recorded_transform_info.decode_half(offset + 3 * FLOAT_SIZE),
-			recorded_transform_info.decode_half(offset + 4 * FLOAT_SIZE),
-			recorded_transform_info.decode_half(offset + 5 * FLOAT_SIZE),
-		),
-		Vector3(
-			recorded_transform_info.decode_half(offset + 6 * FLOAT_SIZE),
-			recorded_transform_info.decode_half(offset + 7 * FLOAT_SIZE),
-			recorded_transform_info.decode_half(offset + 8 * FLOAT_SIZE),
-		),
-		Vector3(
-			recorded_transform_info.decode_half(offset + 9 * FLOAT_SIZE),
-			recorded_transform_info.decode_half(offset + 10 * FLOAT_SIZE),
-			recorded_transform_info.decode_half(offset + 11 * FLOAT_SIZE),
-		)
-	)
+	return CaptureType.build_state_animation(animation, node_initial_state, times, states)

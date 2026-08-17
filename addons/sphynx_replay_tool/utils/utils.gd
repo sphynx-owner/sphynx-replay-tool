@@ -1,6 +1,11 @@
+@tool
 class_name ReplayUtils
 
 static var class_list_memoization: Dictionary[String, Array]
+
+
+static func get_time() -> float:
+	return Time.get_ticks_msec() / 1000.0
 
 
 static func get_native_class_property_list(variant: Variant) -> Array[String]:

@@ -1,85 +1,120 @@
+@tool
 class_name Replayer
 extends Node
 
-signal stopped_replaying_automatically
+signal replay_finished
 
+const REPLAY_ANIMATION: StringName = "replay_animation"
 
-var current_frame: int = 0
+@export var animation_player: AnimationPlayer
 
-var current_node_record_index: int = 0
+var _animation_position_cache: float = 0.0
 
-var current_scene_record: SceneRecord
-
-var active_node_replays: Dictionary[Node, NodeRecord]
-
-var replaying := false
-
-var _camera: Camera3D
-
-
-func start_replaying() -> void:
-	current_frame = 0
-	
-	current_node_record_index = 0
-	
-	replaying = true
-	
-	_camera = Camera3D.new()
-	
-	get_parent().add_child(_camera)
-
-
-func stop_replaying() -> void:
-	for node in active_node_replays.keys():
-		get_parent().remove_child(node)
-	
-	active_node_replays.clear()
-	
-	replaying = false
-	
-	_camera.queue_free()
-
-
-func _process(delta: float) -> void:
-	if !replaying:
-		return
-	
-	if current_frame > current_scene_record.record_end_frame:
-		stop_replaying()
-		stopped_replaying_automatically.emit()
-	
-	if !replaying:
-		return
-	
-	_camera.global_transform = get_parent().get_parent().get_viewport().get_camera_3d().global_transform
-	
-	while true:
-		if current_node_record_index >=current_scene_record.node_records.size():
-			break
+var _current_scene_record: SceneRecord:
+	set(value):
+		if !_scene_record_setter_gate:
+			push_error("can only load or unload a scene record using the load/unload_replay method")
+			return
 		
-		var current_node_record: NodeRecord = current_scene_record.node_records[current_node_record_index]
-		
-		if current_node_record.spawn_frame > current_frame:
-			break
-		
-		current_node_record_index += 1
-		
-		var recreated_node: Node = current_node_record.recreate_node()
+		_current_scene_record = value
+
+var _scene_record_setter_gate: bool = false
+
+
+func _ready() -> void:
+	animation_player.animation_finished.connect(replay_finished.emit.unbind(1))
+
+
+func load_replay(scene_record: SceneRecord) -> void:
+	_scene_record_setter_gate = true
+	_current_scene_record = scene_record
+	_scene_record_setter_gate = false
+	
+	var animation_library: AnimationLibrary = AnimationLibrary.new()
+	
+	var animation: Animation = Animation.new()
+	
+	animation.length = _current_scene_record.record_duration
+	
+	animation_library.add_animation(REPLAY_ANIMATION, animation)
+	
+	animation_player.add_animation_library("", animation_library)
+	
+	var root_node: Node = get_node(animation_player.root_node)
+	
+	for record: NodeRecord in _current_scene_record.node_records:
+		var recreated_node: Node = record.recreate_node()
 		
 		get_parent().add_child(recreated_node)
 		
-		active_node_replays[recreated_node] = current_node_record
-	
-	
-	for node in active_node_replays.keys():
-		if active_node_replays[node].despawn_frame <= current_frame:
-			active_node_replays.erase(node)
+		var temp_animation: Animation = Animation.new()
+		
+		record.build_state_animation(temp_animation)
+		
+		for track_idx in temp_animation.get_track_count():
+			temp_animation.copy_track(track_idx, animation)
 			
-			get_parent().remove_child(node)
+			var existing_path: NodePath = temp_animation.track_get_path(track_idx)
+			
+			var new_path: NodePath = String(root_node.get_path_to(recreated_node)) + String(existing_path.get_as_property_path())
+			
+			animation.track_set_path(animation.get_track_count() - 1, new_path)
+
+
+func unload_replay() -> void:
+	for child in get_parent().get_children():
+		if child == self or child == animation_player:
+			continue
+		
+		child.queue_free()
 	
+	animation_player.remove_animation_library("")
 	
-	for node in active_node_replays.keys():
-		active_node_replays[node].recreate_frame(node, current_frame)
+	_scene_record_setter_gate = true
+	_current_scene_record = null
+	_scene_record_setter_gate = false
 	
+	_animation_position_cache = 0.0
+
+
+func is_replay_loaded() -> bool:
+	return !!_current_scene_record
+
+
+func play() -> void:
+	assert(is_replay_loaded(), "replay must be loaded to play")
 	
-	current_frame += 1
+	animation_player.play(REPLAY_ANIMATION)
+
+
+func pause() -> void:
+	animation_player.pause()
+
+
+func stop() -> void:
+	animation_player.stop()
+	
+	_animation_position_cache = 0.0
+
+
+func seek(time: float) -> void:
+	assert(is_replay_loaded(), "replay must be loaded to seek")
+	
+	animation_player.play(REPLAY_ANIMATION)
+	
+	animation_player.seek(time)
+	
+	_animation_position_cache = time
+	
+	animation_player.pause()
+
+
+func get_length() -> float:
+	return animation_player.get_animation_library("").get_animation(REPLAY_ANIMATION).length
+
+
+func get_position() -> float:
+	if animation_player.is_playing():
+		_animation_position_cache = animation_player.current_animation_position
+	
+	return _animation_position_cache

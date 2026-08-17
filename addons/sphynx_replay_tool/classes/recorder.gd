@@ -1,42 +1,31 @@
+@tool
 class_name Recorder
 extends Node
 
-var current_frame: int = 0
+signal recording_finished(record: SceneRecord)
+
+var settings: RecordingSettings = load("res://addons/sphynx_replay_tool/resources/default_settings.tres")
 
 var current_scene_record: SceneRecord
 
 
-func start_recording() -> void:
-	get_tree().node_added.connect(_on_node_added)
-	get_tree().node_removed.connect(_on_node_removed)
+func start_recording(root: Node) -> void:
+	assert(!current_scene_record, "recorder already has an active scene record")
 	
-	RenderingServer.frame_post_draw.connect(_on_frame_post_draw)
+	current_scene_record = SceneRecord.create(settings, root)
 	
-	current_frame = 0
-	
-	current_scene_record = SceneRecord.new()
-	
-	current_scene_record.create_subtree_records_recursive(get_tree().root, current_frame)
+	current_scene_record.finished.connect(_on_record_finished, CONNECT_ONE_SHOT)
 
 
 func stop_recording() -> void:
-	get_tree().node_added.disconnect(_on_node_added)
-	get_tree().node_removed.disconnect(_on_node_removed)
+	assert(current_scene_record, "no active scene record to stop")
 	
-	RenderingServer.frame_post_draw.disconnect(_on_frame_post_draw)
+	current_scene_record.close_recording()
+
+
+func _on_record_finished() -> void:
+	var temp_record: SceneRecord = current_scene_record
 	
-	current_scene_record.close_all_active_records(current_frame)
-
-
-func _on_node_added(node: Node) -> void:
-	current_scene_record.create_node_record(node, current_frame)
-
-
-func _on_node_removed(node: Node) -> void:
-	current_scene_record.close_node_record(node, current_frame)
-
-
-func _on_frame_post_draw() -> void:
-	current_scene_record.update_all_active_records()
+	current_scene_record = null
 	
-	current_frame += 1
+	recording_finished.emit(temp_record)

@@ -1,0 +1,39 @@
+[gd_scene format=3 uid="uid://b22qmpkn7lgib"]
+
+[ext_resource type="Script" uid="uid://dnj5bcqdrxcbb" path="res://addons/sphynx_replay_tool/ui/replay_controller.gd" id="1_l0dpy"]
+
+[node name="ReplayController" type="PanelContainer" unique_id=2059236463 node_paths=PackedStringArray("play_button", "pause_button", "stop_button", "h_slider")]
+script = ExtResource("1_l0dpy")
+play_button = NodePath("MarginContainer/HBoxContainer/PlayButton")
+pause_button = NodePath("MarginContainer/HBoxContainer/PauseButton")
+stop_button = NodePath("MarginContainer/HBoxContainer/StopButton")
+h_slider = NodePath("MarginContainer/HBoxContainer/HSlider")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1679413787]
+layout_mode = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer" unique_id=36293934]
+layout_mode = 2
+
+[node name="PlayButton" type="Button" parent="MarginContainer/HBoxContainer" unique_id=850336158]
+layout_mode = 2
+text = "play"
+
+[node name="PauseButton" type="Button" parent="MarginContainer/HBoxContainer" unique_id=325792208]
+layout_mode = 2
+text = "pause"
+
+[node name="StopButton" type="Button" parent="MarginContainer/HBoxContainer" unique_id=233591452]
+layout_mode = 2
+text = "stop"
+
+[node name="HSlider" type="HSlider" parent="MarginContainer/HBoxContainer" unique_id=786131357]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+size_flags_vertical = 4
+max_value = 1.0
+step = 0.0

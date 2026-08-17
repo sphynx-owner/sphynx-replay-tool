@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RecordingSettings" format=3 uid="uid://bihpw7q0nqj66"]
+
+[ext_resource type="Script" uid="uid://dj1nucyttiasg" path="res://addons/sphynx_replay_tool/classes/captures/node_3d_capture.gd" id="1_hye4f"]
+[ext_resource type="Script" uid="uid://bghujlaljsoqw" path="res://addons/sphynx_replay_tool/classes/captures/node_capture.gd" id="2_jgqh2"]
+[ext_resource type="Script" uid="uid://d4hp1v2e5kagq" path="res://addons/sphynx_replay_tool/classes/recording_settings.gd" id="3_1pbj1"]
+
+[resource]
+script = ExtResource("3_1pbj1")
+default_capture_class = ExtResource("2_jgqh2")
+custom_capture_classes = Dictionary[String, GDScript]({
+"Node3D": ExtResource("1_hye4f")
+})
+metadata/_custom_type_script = "uid://d4hp1v2e5kagq"

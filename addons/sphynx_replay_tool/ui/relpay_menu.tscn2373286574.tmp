@@ -3,9 +3,8 @@
 [ext_resource type="Script" uid="uid://qdfkynhye77v" path="res://addons/sphynx_replay_tool/replay_manager.gd" id="1_vp06r"]
 [ext_resource type="Script" uid="uid://crn1h6ololsrb" path="res://addons/sphynx_replay_tool/classes/recorder.gd" id="2_lrmc6"]
 [ext_resource type="Script" uid="uid://bcksmwxwkpkw8" path="res://addons/sphynx_replay_tool/classes/replayer.gd" id="3_rwxun"]
-[ext_resource type="PackedScene" uid="uid://b22qmpkn7lgib" path="res://addons/sphynx_replay_tool/ui/replay_controller.tscn" id="3_vmgy4"]
 
-[node name="Control" type="Control" unique_id=937283115 node_paths=PackedStringArray("record_button", "replay_button", "save_button", "load_button", "replay_controller", "recorder", "replayer", "replay_subviewport_container", "replay_viewport")]
+[node name="Control" type="Control" unique_id=937283115 node_paths=PackedStringArray("record_button", "replay_button", "save_button", "load_button", "recorder", "replayer", "replay_subviewport_container", "replay_viewport")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -17,7 +16,6 @@ record_button = NodePath("ReplayMenu/MarginContainer/HBoxContainer/RecordButton"
 replay_button = NodePath("ReplayMenu/MarginContainer/HBoxContainer/ReplayButton")
 save_button = NodePath("ReplayMenu/MarginContainer/HBoxContainer/SaveButton")
 load_button = NodePath("ReplayMenu/MarginContainer/HBoxContainer/LoadButton")
-replay_controller = NodePath("ReplayMenu/MarginContainer/HBoxContainer/ReplayController")
 recorder = NodePath("Recorder")
 replayer = NodePath("SubViewportContainer/ReplayViewport/Replayer")
 replay_subviewport_container = NodePath("SubViewportContainer")
@@ -40,12 +38,9 @@ handle_input_locally = false
 size = Vector2i(1152, 648)
 render_target_update_mode = 0
 
-[node name="Replayer" type="Node" parent="SubViewportContainer/ReplayViewport" unique_id=237616675 node_paths=PackedStringArray("animation_player")]
+[node name="Replayer" type="Node" parent="SubViewportContainer/ReplayViewport" unique_id=237616675]
 script = ExtResource("3_rwxun")
-animation_player = NodePath("../AnimationPlayer")
 metadata/_custom_type_script = "uid://bcksmwxwkpkw8"
-
-[node name="AnimationPlayer" type="AnimationPlayer" parent="SubViewportContainer/ReplayViewport" unique_id=1570163048]
 
 [node name="Label" type="Label" parent="SubViewportContainer" unique_id=1571227913]
 layout_mode = 2
@@ -89,11 +84,6 @@ text = "save"
 [node name="LoadButton" type="Button" parent="ReplayMenu/MarginContainer/HBoxContainer" unique_id=1645137432]
 layout_mode = 2
 text = "load"
-
-[node name="ReplayController" parent="ReplayMenu/MarginContainer/HBoxContainer" unique_id=2059236463 node_paths=PackedStringArray("replayer") instance=ExtResource("3_vmgy4")]
-visible = false
-layout_mode = 2
-replayer = NodePath("../../../../SubViewportContainer/ReplayViewport/Replayer")
 
 [node name="Recorder" type="Node" parent="." unique_id=364745047]
 script = ExtResource("2_lrmc6")

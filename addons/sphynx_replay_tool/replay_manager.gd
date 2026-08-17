@@ -1,5 +1,8 @@
+@tool
 class_name ReplayManager
 extends Node
+
+enum State {NONE, RECORDING, REPLAYING}
 
 @export var record_button: Button
 
@@ -9,6 +12,8 @@ extends Node
 
 @export var load_button: Button
 
+@export var replay_controller: ReplayController
+
 @export var recorder: Recorder
 
 @export var replayer: Replayer
@@ -17,13 +22,19 @@ extends Node
 
 @export var replay_viewport: SubViewport
 
+var current_recording: SceneRecord
+
+var current_state: State = State.NONE
+
 
 func _ready() -> void:
 	record_button.toggled.connect(_on_record_button_toggled)
 	replay_button.toggled.connect(_on_replay_button_toggled)
 	save_button.pressed.connect(_on_save_button_pressed)
 	load_button.pressed.connect(_on_load_button_pressed)
-	replayer.stopped_replaying_automatically.connect(func(): replay_button.button_pressed = false)
+	replayer.replay_finished.connect(func(): replay_button.button_pressed = false)
+	
+	recorder.recording_finished.connect(_on_recording_finished)
 
 
 func _on_record_button_toggled(toggled_on: bool) -> void:
@@ -51,36 +62,41 @@ func _on_replay_button_toggled(toggled_on: bool) -> void:
 
 
 func _start_recording() -> void:
-	recorder.start_recording()
+	recorder.start_recording(get_tree().root)
 
 
 func _stop_recording() -> void:
 	recorder.stop_recording()
 
 
+func _on_recording_finished(recording: SceneRecord) -> void:
+	current_recording = recording
+
+
 func _start_replay() -> void:
 	replay_subviewport_container.visible = true
+	replay_controller.visible = true
 	
 	replay_subviewport_container.grab_focus()
 	
-	replayer.current_scene_record = recorder.current_scene_record
-	replayer.start_replaying()
+	replayer.load_replay(current_recording)
 
 
 func _stop_replay() -> void:
 	replay_subviewport_container.visible = false
+	replay_controller.visible = false
 	
 	replay_subviewport_container.release_focus()
 	
-	replayer.stop_replaying()
+	replayer.unload_replay()
 
 
 func _on_save_button_pressed() -> void:
 	ResourceSaver.save(
-		recorder.current_scene_record, 
+		current_recording, 
 		"res://addons/sphynx_replay_tool/temp/temp_scene_record.tres", 
 		ResourceSaver.SaverFlags.FLAG_REPLACE_SUBRESOURCE_PATHS)
 
 
 func _on_load_button_pressed() -> void:
-	recorder.current_scene_record = ResourceLoader.load("res://addons/sphynx_replay_tool/temp/temp_scene_record.tres")
+	current_recording = ResourceLoader.load("res://addons/sphynx_replay_tool/temp/temp_scene_record.tres")
