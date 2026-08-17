@@ -32,5 +32,16 @@ static func recreate_initial_state(initial_state: Variant) -> void:
 	pass
 
 
-static func build_state_animation(animation: Animation, initial_state: Variant, frame_times: Array[float], states: Array[Variant]) -> void:
-	pass
+static func build_state_animation(animation: Animation, node_record: NodeRecord) -> void:
+	var visibility_track: int = animation.find_track(NodePath(":visibility"), Animation.TYPE_VALUE)
+	
+	if visibility_track == -1:
+		visibility_track = animation.add_track(Animation.TYPE_VALUE)
+		
+		animation.track_set_path(visibility_track, NodePath(":visibility"))
+	
+	animation.track_insert_key(visibility_track, 0.0, false)
+	
+	animation.track_insert_key(visibility_track, node_record.spawn_time, true)
+	
+	animation.track_insert_key(visibility_track, node_record.despawn_time, false)

@@ -79,4 +79,4 @@ func build_state_animation(animation: Animation) -> void:
 	
 	animation.length = despawn_time
 	
-	return CaptureType.build_state_animation(animation, node_initial_state, times, states)
+	return CaptureType.build_state_animation(animation, self)
