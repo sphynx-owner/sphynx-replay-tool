@@ -1,30 +1,74 @@
 @tool
 class_name Replayer
-extends Node
+extends AnimationPlayer
+# NOTE @sphynx-owner: Godot animation player sucks.
 
 const REPLAY_ANIMATION: StringName = "replay_animation"
 
-@export var animation_player: AnimationPlayer
+## DO NOT SET DIRECTLY, use [mesthod load_replay] and [method unload_replay] instead
+var _current_scene_record: SceneRecord
 
-var _animation_position_cache: float = 0.0
+var _save_temp_record: SceneRecord
 
-var _current_scene_record: SceneRecord:
-	set(value):
-		if !_scene_record_setter_gate:
-			push_error("can only load or unload a scene record using the load/unload_replay method")
-			return
+var _replay_loaded: bool = false
+
+var animation_player_editor: Control
+
+
+# HACK @sphynx-owner: This entire scheme around the animation player editor is to solve a bug that happens
+# when selecting the animation player, which opens the animation player editor. At that point something
+# happens that resets the assigned animation, and it causes error spam. Reacting to when it becomes visible
+# resolves this.
+func _ready() -> void:
+	if Engine.is_editor_hint():
+		animation_player_editor = _find_animation_player_editor_recursive(EditorInterface.get_base_control())
 		
-		_current_scene_record = value
+		animation_player_editor.visibility_changed.connect(_on_animation_player_editor_visibility_changed)
 
-var _scene_record_setter_gate: bool = false
+
+func _find_animation_player_editor_recursive(node: Node) -> Node:
+	if node.get_class() == "AnimationPlayerEditor":
+		return node
+	
+	for child in node.get_children():
+		var found: Node = _find_animation_player_editor_recursive(child)
+		
+		if found:
+			return found
+	
+	return null
+
+
+func _on_animation_player_editor_visibility_changed() -> void:
+	if is_replay_loaded():
+		assigned_animation = REPLAY_ANIMATION
+
+
+# NOTICE @sphynx-skillcap: we are preventing any loaded replay state from being
+# saved with the scene. This is crucial since it seems to be causing instabilities
+# with the animation player aspect.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_EDITOR_PRE_SAVE:
+		_save_temp_record = _current_scene_record
+		
+		unload_replay()
+	
+	if what == NOTIFICATION_EDITOR_POST_SAVE:
+		load_replay.call_deferred(_save_temp_record)
+		
+		_save_temp_record = null
+
+
+func _process(delta: float) -> void:
+	if is_replay_loaded():
+		if !assigned_animation:
+			assigned_animation = REPLAY_ANIMATION
 
 
 func load_replay(scene_record: SceneRecord) -> void:
 	unload_replay()
 	
-	_scene_record_setter_gate = true
 	_current_scene_record = scene_record
-	_scene_record_setter_gate = false
 	
 	var animation_library: AnimationLibrary = AnimationLibrary.new()
 	
@@ -34,14 +78,14 @@ func load_replay(scene_record: SceneRecord) -> void:
 	
 	animation_library.add_animation(REPLAY_ANIMATION, animation)
 	
-	animation_player.add_animation_library("", animation_library)
+	add_animation_library("", animation_library)
 	
-	var root_node: Node = get_node(animation_player.root_node)
+	root_node = NodePath("./")
 	
 	for record: NodeRecord in _current_scene_record.node_records:
 		var recreated_node: Node = record.recreate_node()
 		
-		get_parent().add_child(recreated_node)
+		add_child(recreated_node)
 		
 		var temp_animation: Animation = Animation.new()
 		
@@ -54,66 +98,83 @@ func load_replay(scene_record: SceneRecord) -> void:
 			
 			var existing_path: NodePath = temp_animation.track_get_path(track_idx)
 			
-			var new_path: NodePath = String(root_node.get_path_to(recreated_node)) + String(existing_path.get_as_property_path())
+			var new_path: NodePath = String(get_path_to(recreated_node)) + String(existing_path.get_as_property_path())
 			
 			animation.track_set_path(animation.get_track_count() - 1, new_path)
+	
+	# HACK @sphynx-owner: account for the case where the animation player is selected in the editor, opening
+	# the animation editor dock. Any further attempt to load a replay would result in "no current animation" error.
+	# I FUCKING HATE ANIMATION PLAYERS IN GODOT I HATE THEM THEY MAKE NO SENSE.
+	await RenderingServer.frame_post_draw
+	
+	_replay_loaded = true
+	
+	# HACK @sphynx-owner: a way to prime the animation
+	play_rep()
+	pause_rep()
+	
+	# HACK @sphynx-owner: when saving, the scene record is replayed. It somehow
+	# maintains the animation position, but it does not visually update to it immediately,
+	# so I am adding a seek so that it does so.
+	seek_rep(get_position())
 
 
 func unload_replay() -> void:
-	for child in get_parent().get_children():
-		if child == self or child == animation_player:
-			continue
-		
+	if is_playing():
+		# NOTE @sphynx-owner: calls the parent method directly. We just want a safe cleanup of the animation library,
+		# We don't care if a replay is loaded or not.
+		stop()
+	
+	for child in get_children():
 		child.queue_free()
 	
-	if animation_player.has_animation_library(""):
-		animation_player.remove_animation_library("")
+	if has_animation_library(""):
+		remove_animation_library("")
 	
-	_scene_record_setter_gate = true
 	_current_scene_record = null
-	_scene_record_setter_gate = false
 	
-	_animation_position_cache = 0.0
+	_replay_loaded = false
 
 
 func is_replay_loaded() -> bool:
-	return !!_current_scene_record
+	return _replay_loaded
 
 
-func play() -> void:
+func play_rep() -> void:
 	assert(is_replay_loaded(), "replay must be loaded to play")
 	
-	animation_player.play(REPLAY_ANIMATION)
+	play(REPLAY_ANIMATION)
 
 
-func pause() -> void:
-	animation_player.pause()
-
-
-func stop() -> void:
-	animation_player.stop()
+func pause_rep() -> void:
+	assert(is_replay_loaded(), "replay must be loaded to stop")
 	
-	_animation_position_cache = 0.0
+	pause()
 
 
-func seek(time: float) -> void:
+func stop_rep() -> void:
+	assert(is_replay_loaded(), "replay must be loaded to stop")
+	
+	stop()
+	
+	assigned_animation = REPLAY_ANIMATION
+
+
+func seek_rep(time: float) -> void:
 	assert(is_replay_loaded(), "replay must be loaded to seek")
 	
-	animation_player.play(REPLAY_ANIMATION)
-	
-	animation_player.seek(time)
-	
-	_animation_position_cache = time
-	
-	animation_player.pause()
+	seek(time, true)
 
 
 func get_length() -> float:
-	return animation_player.get_animation_library("").get_animation(REPLAY_ANIMATION).length
+	if !is_replay_loaded():
+		return 0
+	
+	return get_animation_library("").get_animation(REPLAY_ANIMATION).length
 
 
 func get_position() -> float:
-	if animation_player.is_playing():
-		_animation_position_cache = animation_player.current_animation_position
+	if !is_replay_loaded():
+		return 0.0
 	
-	return _animation_position_cache
+	return current_animation_position

@@ -31,6 +31,14 @@ var current_state: State = State.NONE
 
 @export_tool_button("test_stop_replay") var test_stop_replay = _test_stop_replay
 
+@export_tool_button("test play") var test_play = _test_play
+
+@export_tool_button("test pause") var test_pause = _test_pause
+
+@export_tool_button("test stop") var test_stop = _test_stop
+
+@export_tool_button("test seek") var test_seek = _test_seek
+
 
 func _test_replay() -> void:
 	_on_load_button_pressed()
@@ -40,6 +48,22 @@ func _test_replay() -> void:
 
 func _test_stop_replay() -> void:
 	_stop_replay()
+
+
+func _test_play() -> void:
+	replayer.play_rep()
+
+
+func _test_pause() -> void:
+	replayer.pause_rep()
+
+
+func _test_stop() -> void:
+	replayer.stop_rep()
+
+
+func _test_seek() -> void:
+	replayer.seek_rep(3)
 
 
 func _ready() -> void:
