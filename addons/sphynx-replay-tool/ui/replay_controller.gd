@@ -51,16 +51,16 @@ func _on_visibility_changed() -> void:
 
 
 func _on_play_pressed() -> void:
-	replayer.play()
+	replayer.play_rep()
 
 
 func _on_pause_pressed() -> void:
-	replayer.pause()
+	replayer.pause_rep()
 
 
 func _on_stop_pressed() -> void:
-	replayer.stop()
+	replayer.stop_rep()
 
 
 func _on_slider_value_set(value: float) -> void:
-	replayer.seek(value)
+	replayer.seek_rep(value)

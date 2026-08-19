@@ -49,14 +49,16 @@ func _on_animation_player_editor_visibility_changed() -> void:
 # with the animation player aspect.
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_EDITOR_PRE_SAVE:
-		_save_temp_record = _current_scene_record
-		
-		unload_replay()
+		if _replay_loaded:
+			_save_temp_record = _current_scene_record
+			
+			unload_replay()
 	
 	if what == NOTIFICATION_EDITOR_POST_SAVE:
-		load_replay.call_deferred(_save_temp_record)
-		
-		_save_temp_record = null
+		if _save_temp_record:
+			load_replay.call_deferred(_save_temp_record)
+			
+			_save_temp_record = null
 
 
 func _process(delta: float) -> void:
