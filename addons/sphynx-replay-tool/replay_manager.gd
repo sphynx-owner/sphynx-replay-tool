@@ -63,7 +63,7 @@ func _test_stop() -> void:
 
 
 func _test_seek() -> void:
-	replayer.seek_rep(3)
+	replayer.seek_rep(1)
 
 
 func _ready() -> void:

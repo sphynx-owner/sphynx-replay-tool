@@ -81,13 +81,13 @@ func _notification(what: int) -> void:
 			
 			await RenderingServer.frame_post_draw
 			
-			var spin_box: SpinBox = _find_animation_player_editor_frame_spinbox(animation_player_editor)
+			if animation_player_editor.visible:
+				var spin_box: SpinBox = _find_animation_player_editor_frame_spinbox(animation_player_editor)
+				
+				spin_box.value = _save_temp_position
 			
-			spin_box.value = _save_temp_position
-			
-			seek(_save_temp_position)
-			
-			advance(0)
+			# NOTE @sphynx-owner: must be called deferred because loading of the replay is also deferred.
+			seek_rep.call_deferred(_save_temp_position)
 
 
 func _process(delta: float) -> void:
@@ -147,14 +147,11 @@ func load_replay(scene_record: SceneRecord) -> void:
 	
 	_replay_loaded = true
 	
-	# HACK @sphynx-owner: a way to prime the animation
-	play_rep()
-	pause_rep()
+	# HACK @sphynx-owner: part of the same hack as above. solves the error spam.
+	assigned_animation = REPLAY_ANIMATION
 	
-	# HACK @sphynx-owner: when saving, the scene record is replayed. It somehow
-	# maintains the animation position, but it does not visually update to it immediately,
-	# so I am adding a seek so that it does so.
-	seek_rep(get_position())
+	# HACK @sphynx-owner: updates the animation to its initial state.
+	advance(0)
 
 
 func unload_replay() -> void:
@@ -202,6 +199,9 @@ func seek_rep(time: float) -> void:
 	assert(is_replay_loaded(), "replay must be loaded to seek")
 	
 	seek(time, true)
+	
+	# HACK @sphynx-owner: crucial for editor-robust seeking. Otherwise does not update sometimes
+	advance(0)
 
 
 func get_length() -> float:
