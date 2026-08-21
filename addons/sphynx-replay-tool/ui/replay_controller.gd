@@ -42,7 +42,7 @@ func _get_configuration_warnings() -> PackedStringArray:
 
 
 func _process(delta: float) -> void:
-	# HACK @sphynx-skillcap: using a gate here. If the max value changes below
+	# HACK @sphynx-owner: using a gate here. If the max value changes below
 	# the slider's current value, it would implicitly change the slider's value
 	# and emit a signal. I am considering using set_block_signals() but I don't
 	# know what other internals it might sabotage.

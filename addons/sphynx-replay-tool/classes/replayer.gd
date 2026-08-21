@@ -61,7 +61,7 @@ func _on_animation_player_editor_visibility_changed() -> void:
 		assigned_animation = REPLAY_ANIMATION
 
 
-# NOTICE @sphynx-skillcap: we are preventing any loaded replay state from being
+# NOTICE @sphynx-owner: we are preventing any loaded replay state from being
 # saved with the scene. This is crucial since it seems to be causing instabilities
 # with the animation player aspect.
 func _notification(what: int) -> void:
