@@ -113,7 +113,7 @@ func load_replay(scene_record: SceneRecord) -> void:
 	
 	root_node = NodePath("./")
 	
-	var viewport: Viewport = get_viewport()
+	var viewport: Viewport = ReplayUtils.safe_get_viewport(self)
 	
 	if viewport is SubViewport:
 		viewport.size = _current_scene_record.viewport_size
@@ -123,7 +123,7 @@ func load_replay(scene_record: SceneRecord) -> void:
 		
 		add_child(recreated_node)
 		
-		recreated_node.owner = owner
+		#recreated_node.owner = owner
 		
 		var temp_animation: Animation = Animation.new()
 		

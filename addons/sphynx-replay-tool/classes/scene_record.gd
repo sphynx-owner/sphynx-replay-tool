@@ -63,7 +63,7 @@ func start_recording():
 		viewport_size = _record_root.size
 		
 	else:
-		viewport_size = _record_root.get_viewport().size
+		viewport_size = ReplayUtils.safe_get_viewport(_record_root).size
 	
 	_record_root.get_tree().node_added.connect(_on_node_added)
 	_record_root.get_tree().node_removed.connect(_on_node_removed)

@@ -12,6 +12,7 @@
 [ext_resource type="RDShaderFile" uid="uid://dyxn6g5gvoge7" path="res://addons/easy-compositor/debug/shader_stages/debug_overlay.glsl" id="10_a0m6l"]
 [ext_resource type="Script" uid="uid://bi6xhl7lpiu4n" path="res://addons/easy-compositor/debug/post_process_debug.gd" id="11_wwnd0"]
 [ext_resource type="Script" uid="uid://dj1nucyttiasg" path="res://addons/sphynx-replay-tool/classes/captures/node_3d_capture.gd" id="12_nifce"]
+[ext_resource type="Script" uid="uid://cxwpdujpsmx0g" path="res://blur-generator/blur_generator_compositor.gd" id="12_qtqdm"]
 [ext_resource type="Script" uid="uid://cqel2pdrnuolt" path="res://camera_3d.gd" id="13_l7pbx"]
 [ext_resource type="Texture2D" uid="uid://cnfwl8040q4mt" path="res://icon.svg" id="14_rd2qr"]
 [ext_resource type="Script" uid="uid://br6rroh08c1wk" path="res://benchmarks/playground/mesh_instance_3d_2.gd" id="15_8uyon"]
@@ -54,8 +55,17 @@ script = ExtResource("11_wwnd0")
 debug = true
 metadata/_custom_type_script = "uid://bi6xhl7lpiu4n"
 
+[sub_resource type="CompositorEffect" id="CompositorEffect_xad08"]
+resource_local_to_scene = false
+resource_name = ""
+enabled = true
+effect_callback_type = 4
+needs_motion_vectors = false
+needs_normal_roughness = false
+script = ExtResource("12_qtqdm")
+
 [sub_resource type="Compositor" id="Compositor_5v3c7"]
-compositor_effects = Array[CompositorEffect]([SubResource("CompositorEffect_o1hov"), SubResource("CompositorEffect_7x4fh")])
+compositor_effects = Array[CompositorEffect]([SubResource("CompositorEffect_o1hov"), SubResource("CompositorEffect_7x4fh"), SubResource("CompositorEffect_xad08")])
 
 [sub_resource type="PackedScene" id="PackedScene_uu55s"]
 _bundled = {
