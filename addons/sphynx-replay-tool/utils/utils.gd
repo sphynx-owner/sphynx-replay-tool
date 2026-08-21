@@ -8,6 +8,19 @@ static func get_time() -> float:
 	return Time.get_ticks_msec() / 1000.0
 
 
+static func find_environment_recursive(node: Node) -> WorldEnvironment:
+	if node is WorldEnvironment:
+		return node
+	
+	for child in node.get_children():
+		var found: Node = find_environment_recursive(child)
+		
+		if found:
+			return found
+	
+	return null
+
+
 static func get_native_class_property_list(variant: Variant) -> Array[String]:
 	var _class: String
 	

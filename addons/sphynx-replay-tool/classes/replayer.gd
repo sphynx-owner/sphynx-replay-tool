@@ -2,6 +2,8 @@
 class_name Replayer
 extends AnimationPlayer
 # NOTE @sphynx-owner: Godot animation player sucks.
+# TODO @sphynx-owner: explore using advance(0) where I need to update the animation
+# without changing its state.
 
 const REPLAY_ANIMATION: StringName = "replay_animation"
 
@@ -9,6 +11,8 @@ const REPLAY_ANIMATION: StringName = "replay_animation"
 var _current_scene_record: SceneRecord
 
 var _save_temp_record: SceneRecord
+
+var _save_temp_position: float
 
 var _replay_loaded: bool = false
 
@@ -39,6 +43,19 @@ func _find_animation_player_editor_recursive(node: Node) -> Node:
 	return null
 
 
+func _find_animation_player_editor_frame_spinbox(node: Node) -> Node:
+	if node is SpinBox:
+		return node
+	
+	for child in node.get_children():
+		var found: Node = _find_animation_player_editor_frame_spinbox(child)
+		
+		if found:
+			return found
+	
+	return null
+
+
 func _on_animation_player_editor_visibility_changed() -> void:
 	if is_replay_loaded():
 		assigned_animation = REPLAY_ANIMATION
@@ -52,6 +69,8 @@ func _notification(what: int) -> void:
 		if _replay_loaded:
 			_save_temp_record = _current_scene_record
 			
+			_save_temp_position = get_position()
+			
 			unload_replay()
 	
 	if what == NOTIFICATION_EDITOR_POST_SAVE:
@@ -59,6 +78,16 @@ func _notification(what: int) -> void:
 			load_replay.call_deferred(_save_temp_record)
 			
 			_save_temp_record = null
+			
+			await RenderingServer.frame_post_draw
+			
+			var spin_box: SpinBox = _find_animation_player_editor_frame_spinbox(animation_player_editor)
+			
+			spin_box.value = _save_temp_position
+			
+			seek(_save_temp_position)
+			
+			advance(0)
 
 
 func _process(delta: float) -> void:
@@ -83,6 +112,11 @@ func load_replay(scene_record: SceneRecord) -> void:
 	add_animation_library("", animation_library)
 	
 	root_node = NodePath("./")
+	
+	var viewport: Viewport = get_viewport()
+	
+	if viewport is SubViewport:
+		viewport.size = _current_scene_record.viewport_size
 	
 	for record: NodeRecord in _current_scene_record.node_records:
 		var recreated_node: Node = record.recreate_node()

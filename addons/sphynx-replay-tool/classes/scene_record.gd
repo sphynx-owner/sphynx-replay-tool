@@ -8,6 +8,8 @@ enum State {EMPTY, RECORDING, FULL}
 
 @export_storage var settings: RecordingSettings
 
+@export_storage var viewport_size: Vector2i
+
 ## Records of all nodes in the scene, in the order they were spawned in.
 @export_storage var node_records: Array[NodeRecord]
 
@@ -56,6 +58,12 @@ func start_recording():
 	state = State.RECORDING
 	
 	_record_start_time = ReplayUtils.get_time()
+	
+	if _record_root is Viewport:
+		viewport_size = _record_root.size
+		
+	else:
+		viewport_size = _record_root.get_viewport().size
 	
 	_record_root.get_tree().node_added.connect(_on_node_added)
 	_record_root.get_tree().node_removed.connect(_on_node_removed)
