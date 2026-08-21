@@ -91,7 +91,11 @@ func _on_record_button_toggled(toggled_on: bool) -> void:
 
 func _on_replay_button_toggled(toggled_on: bool) -> void:
 	if toggled_on:
-		_start_replay()
+		if !_start_replay():
+			replay_button.set_pressed_no_signal(false)
+			
+			return
+		
 		record_button.disabled = true
 		
 	else:
@@ -111,13 +115,19 @@ func _on_recording_finished(recording: SceneRecord) -> void:
 	current_recording = recording
 
 
-func _start_replay() -> void:
+func _start_replay() -> bool:
+	if !current_recording:
+		push_error("cannot replay, no recording is loaded")
+		return false
+	
 	replay_subviewport_container.visible = true
 	replay_controller.visible = true
 	
 	replay_subviewport_container.grab_focus()
 	
 	replayer.load_replay(current_recording)
+	
+	return true
 
 
 func _stop_replay() -> void:
@@ -132,9 +142,9 @@ func _stop_replay() -> void:
 func _on_save_button_pressed() -> void:
 	ResourceSaver.save(
 		current_recording, 
-		"res://addons/sphynx_replay_tool/temp/temp_scene_record.tres", 
+		"res://addons/sphynx-replay-tool/temp/temp_scene_record.tres", 
 		ResourceSaver.SaverFlags.FLAG_REPLACE_SUBRESOURCE_PATHS)
 
 
 func _on_load_button_pressed() -> void:
-	current_recording = ResourceLoader.load("res://addons/sphynx_replay_tool/temp/temp_scene_record.tres")
+	current_recording = ResourceLoader.load("res://addons/sphynx-replay-tool/temp/temp_scene_record.tres")

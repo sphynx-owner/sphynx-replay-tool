@@ -16,6 +16,7 @@ extends PanelContainer
 		
 		update_configuration_warnings()
 
+var max_value_change_gate: bool = false
 
 func _ready() -> void:
 	visibility_changed.connect(_on_visibility_changed)
@@ -41,7 +42,13 @@ func _get_configuration_warnings() -> PackedStringArray:
 
 
 func _process(delta: float) -> void:
+	# HACK @sphynx-skillcap: using a gate here. If the max value changes below
+	# the slider's current value, it would implicitly change the slider's value
+	# and emit a signal. I am considering using set_block_signals() but I don't
+	# know what other internals it might sabotage.
+	max_value_change_gate = true
 	h_slider.max_value = replayer.get_length()
+	max_value_change_gate = false
 	
 	h_slider.set_value_no_signal(replayer.get_position())
 
@@ -63,4 +70,7 @@ func _on_stop_pressed() -> void:
 
 
 func _on_slider_value_set(value: float) -> void:
+	if max_value_change_gate:
+		return
+	
 	replayer.seek_rep(value)

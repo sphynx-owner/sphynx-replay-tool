@@ -89,6 +89,8 @@ func load_replay(scene_record: SceneRecord) -> void:
 		
 		add_child(recreated_node)
 		
+		recreated_node.owner = owner
+		
 		var temp_animation: Animation = Animation.new()
 		
 		temp_animation.length = _current_scene_record.record_duration

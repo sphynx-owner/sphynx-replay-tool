@@ -4,7 +4,7 @@ extends Node
 
 signal recording_finished(record: SceneRecord)
 
-var settings: RecordingSettings = load("res://addons/sphynx_replay_tool/resources/default_settings.tres")
+var settings: RecordingSettings = load("res://addons/sphynx-replay-tool/resources/default_settings.tres")
 
 var current_scene_record: SceneRecord
 
