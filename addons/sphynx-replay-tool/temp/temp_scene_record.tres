@@ -35,12 +35,12 @@ sky = SubResource("Sky_aa0ni")
 [sub_resource type="CompositorEffect" id="CompositorEffect_o1hov"]
 resource_local_to_scene = false
 resource_name = ""
-enabled = true
+enabled = false
 effect_callback_type = 4
 needs_motion_vectors = true
 needs_normal_roughness = false
 script = ExtResource("7_in2kr")
-samples = 4
+samples = 32
 debug = true
 metadata/_custom_type_script = "uid://c5jewnyvlca7j"
 

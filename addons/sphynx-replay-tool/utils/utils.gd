@@ -37,7 +37,7 @@ static func get_or_add_active_compositor_effect(node: Node, type: GDScript) -> C
 
 
 static func set_active_environment(node: Node, environment: Environment) -> void:
-	return _set_active_post_process_config(node, CAM_ENVIRONMENT_PROP, environment)
+	_set_active_post_process_config(node, CAM_ENVIRONMENT_PROP, environment)
 
 
 static func get_active_environment(node: Node) -> Environment:
@@ -45,7 +45,7 @@ static func get_active_environment(node: Node) -> Environment:
 
 
 static func set_active_camera_attributes(node: Node, attributes: CameraAttributes) -> void:
-	return _set_active_post_process_config(node, CAM_CAMERA_ATTRIBUTES_PROP, attributes)
+	_set_active_post_process_config(node, CAM_CAMERA_ATTRIBUTES_PROP, attributes)
 
 
 static func get_active_camera_attributes(node: Node) -> CameraAttributes:
@@ -53,7 +53,7 @@ static func get_active_camera_attributes(node: Node) -> CameraAttributes:
 
 
 static func set_active_compositor(node: Node, compositor: Compositor) -> void:
-	return _set_active_post_process_config(node, CAM_COMPOSITOR_PROP, compositor)
+	_set_active_post_process_config(node, CAM_COMPOSITOR_PROP, compositor)
 
 
 static func get_active_compositor(node: Node) -> Compositor:
