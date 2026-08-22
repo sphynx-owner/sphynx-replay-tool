@@ -24,7 +24,9 @@ static func get_or_add_active_compositor_effect(node: Node, type: GDScript) -> C
 		set_active_compositor(node, compositor)
 	
 	for compositor_effect in compositor.compositor_effects:
+		push_error("existing compositor effect: ", compositor_effect.get_script().resource_path.get_file())
 		if is_script_type(compositor_effect, type):
+			print("returning existing effects")
 			return compositor_effect
 	
 	var new_effect: CompositorEffect = BlurGeneratorCompositor.new()
@@ -33,11 +35,12 @@ static func get_or_add_active_compositor_effect(node: Node, type: GDScript) -> C
 	# Simply using append() would not update the compositor.
 	compositor.compositor_effects = compositor.compositor_effects + [new_effect]
 	
+	print("returning new effects")
 	return new_effect
 
 
 static func set_active_environment(node: Node, environment: Environment) -> void:
-	_set_active_post_process_config(node, CAM_ENVIRONMENT_PROP, environment)
+	_set_active_post_process_config(node, CAM_ENVIRONMENT_PROP, ENV_ENVIRONMENT_PROP, environment)
 
 
 static func get_active_environment(node: Node) -> Environment:
@@ -45,7 +48,7 @@ static func get_active_environment(node: Node) -> Environment:
 
 
 static func set_active_camera_attributes(node: Node, attributes: CameraAttributes) -> void:
-	_set_active_post_process_config(node, CAM_CAMERA_ATTRIBUTES_PROP, attributes)
+	_set_active_post_process_config(node, CAM_CAMERA_ATTRIBUTES_PROP, ENV_CAMERA_ATTRIBUTES_PROP, attributes)
 
 
 static func get_active_camera_attributes(node: Node) -> CameraAttributes:
@@ -53,7 +56,7 @@ static func get_active_camera_attributes(node: Node) -> CameraAttributes:
 
 
 static func set_active_compositor(node: Node, compositor: Compositor) -> void:
-	_set_active_post_process_config(node, CAM_COMPOSITOR_PROP, compositor)
+	_set_active_post_process_config(node, CAM_COMPOSITOR_PROP, ENV_COMPOSITOR_PROP, compositor)
 
 
 static func get_active_compositor(node: Node) -> Compositor:
@@ -61,8 +64,25 @@ static func get_active_compositor(node: Node) -> Compositor:
 
 
 ## Assumes there is an active camera that we can override post process attributes on.
-static func _set_active_post_process_config(node: Node, cam_prop_name: StringName, value: Object) -> void:
-	safe_get_viewport(node).get_camera_3d().set(cam_prop_name, value)
+# TODO @sphynx-owner: explore ensuring null values on the world3D camera attributes and environment properties.
+static func _set_active_post_process_config(node: Node, cam_prop_name: StringName, env_prop_name: StringName, value: Object) -> void:
+	var viewport: Viewport = safe_get_viewport(node)
+	
+	# If the value is null, we must ensure it's null along the fallback value on the environment
+	# as well.
+	if value == null:
+		var environment: WorldEnvironment = find_environment_recursive(viewport)
+		
+		if environment:
+			environment.set(env_prop_name, value)
+	
+	var camera: Camera3D = viewport.get_camera_3d()
+	
+	if !camera:
+		push_error("no camera available to set active post process config")
+		return
+	
+	camera.set(cam_prop_name, value)
 
 
 ## The post-proecssing of a scene is influenced by nodes present in it. The WorldEnvironment node

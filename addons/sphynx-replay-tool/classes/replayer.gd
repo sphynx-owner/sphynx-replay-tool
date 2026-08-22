@@ -99,7 +99,9 @@ func _process(delta: float) -> void:
 func load_replay(scene_record: SceneRecord) -> void:
 	unload_replay()
 	
-	_current_scene_record = scene_record
+	# HACK @sphynx-skillcap: duplicating-deep the scene record so that if modifications
+	# happen to nodes' resources it does not modify the underlying scene record.
+	_current_scene_record = scene_record.duplicate(true)
 	
 	var animation_library: AnimationLibrary = AnimationLibrary.new()
 	
@@ -123,7 +125,7 @@ func load_replay(scene_record: SceneRecord) -> void:
 		
 		add_child(recreated_node)
 		
-		#recreated_node.owner = owner
+		recreated_node.owner = owner
 		
 		var temp_animation: Animation = Animation.new()
 		
