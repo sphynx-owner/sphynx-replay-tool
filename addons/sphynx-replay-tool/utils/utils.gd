@@ -24,9 +24,7 @@ static func get_or_add_active_compositor_effect(node: Node, type: GDScript) -> C
 		set_active_compositor(node, compositor)
 	
 	for compositor_effect in compositor.compositor_effects:
-		push_error("existing compositor effect: ", compositor_effect.get_script().resource_path.get_file())
 		if is_script_type(compositor_effect, type):
-			print("returning existing effects")
 			return compositor_effect
 	
 	var new_effect: CompositorEffect = BlurGeneratorCompositor.new()
@@ -35,7 +33,6 @@ static func get_or_add_active_compositor_effect(node: Node, type: GDScript) -> C
 	# Simply using append() would not update the compositor.
 	compositor.compositor_effects = compositor.compositor_effects + [new_effect]
 	
-	print("returning new effects")
 	return new_effect
 
 
