@@ -7,6 +7,8 @@ extends AnimationPlayer
 
 const REPLAY_ANIMATION: StringName = "replay_animation"
 
+var show_nodes_in_editor: bool = false
+
 ## DO NOT SET DIRECTLY, use [mesthod load_replay] and [method unload_replay] instead
 var _current_scene_record: SceneRecord
 
@@ -16,8 +18,11 @@ var _save_temp_position: float
 
 var _replay_loaded: bool = false
 
-var animation_player_editor: Control
+var _animation_player_editor: Control
 
+var _animation_player_editor_spin_box: SpinBox
+
+#region Virtual Methods
 
 # HACK @sphynx-owner: This entire scheme around the animation player editor is to solve a bug that happens
 # when selecting the animation player, which opens the animation player editor. At that point something
@@ -25,40 +30,11 @@ var animation_player_editor: Control
 # resolves this.
 func _ready() -> void:
 	if Engine.is_editor_hint():
-		animation_player_editor = _find_animation_player_editor_recursive(EditorInterface.get_base_control())
+		_animation_player_editor = _find_animation_player_editor_recursive(EditorInterface.get_base_control())
 		
-		animation_player_editor.visibility_changed.connect(_on_animation_player_editor_visibility_changed)
-
-
-func _find_animation_player_editor_recursive(node: Node) -> Node:
-	if node.get_class() == "AnimationPlayerEditor":
-		return node
-	
-	for child in node.get_children():
-		var found: Node = _find_animation_player_editor_recursive(child)
+		_animation_player_editor.visibility_changed.connect(_on_animation_player_editor_visibility_changed)
 		
-		if found:
-			return found
-	
-	return null
-
-
-func _find_animation_player_editor_frame_spinbox(node: Node) -> Node:
-	if node is SpinBox:
-		return node
-	
-	for child in node.get_children():
-		var found: Node = _find_animation_player_editor_frame_spinbox(child)
-		
-		if found:
-			return found
-	
-	return null
-
-
-func _on_animation_player_editor_visibility_changed() -> void:
-	if is_replay_loaded():
-		assigned_animation = REPLAY_ANIMATION
+		_animation_player_editor_spin_box = _find_animation_player_editor_frame_spinbox(_animation_player_editor)
 
 
 # NOTICE @sphynx-owner: we are preventing any loaded replay state from being
@@ -81,10 +57,8 @@ func _notification(what: int) -> void:
 			
 			await RenderingServer.frame_post_draw
 			
-			if animation_player_editor.visible:
-				var spin_box: SpinBox = _find_animation_player_editor_frame_spinbox(animation_player_editor)
-				
-				spin_box.value = _save_temp_position
+			if _animation_player_editor.visible:
+				_animation_player_editor_spin_box.value = _save_temp_position
 			
 			# NOTE @sphynx-owner: must be called deferred because loading of the replay is also deferred.
 			seek_rep.call_deferred(_save_temp_position)
@@ -95,6 +69,9 @@ func _process(delta: float) -> void:
 		if !assigned_animation:
 			assigned_animation = REPLAY_ANIMATION
 
+#endregion
+
+#region Public Methods
 
 func load_replay(scene_record: SceneRecord) -> void:
 	unload_replay()
@@ -125,7 +102,8 @@ func load_replay(scene_record: SceneRecord) -> void:
 		
 		add_child(recreated_node)
 		
-		recreated_node.owner = owner
+		if Engine.is_editor_hint() and show_nodes_in_editor:
+			recreated_node.owner = owner
 		
 		var temp_animation: Animation = Animation.new()
 		
@@ -218,3 +196,42 @@ func get_position() -> float:
 		return 0.0
 	
 	return current_animation_position
+
+#endregion
+
+#region Private Methods
+
+func _find_animation_player_editor_recursive(node: Node) -> Node:
+	if node.get_class() == "AnimationPlayerEditor":
+		return node
+	
+	for child in node.get_children():
+		var found: Node = _find_animation_player_editor_recursive(child)
+		
+		if found:
+			return found
+	
+	return null
+
+
+func _find_animation_player_editor_frame_spinbox(node: Node) -> Node:
+	if node is SpinBox:
+		return node
+	
+	for child in node.get_children():
+		var found: Node = _find_animation_player_editor_frame_spinbox(child)
+		
+		if found:
+			return found
+	
+	return null
+
+
+# HACK @sphyn-skillcap: This covers a very annoying case where if I select the animation player
+# in the scene editor, to open the animation editor, the next time I load the replay I would get
+# an error about missing current animation.
+func _on_animation_player_editor_visibility_changed() -> void:
+	if is_replay_loaded():
+		assigned_animation = REPLAY_ANIMATION
+
+#endregion

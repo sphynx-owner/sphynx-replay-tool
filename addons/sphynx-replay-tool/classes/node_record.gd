@@ -68,7 +68,11 @@ func recreate_node() -> Node:
 	
 	assert(node_capture != null, "initial state is null")
 	
-	return CaptureType.recreate_node(node_capture)
+	var recreated: Node = CaptureType.recreate_node(node_capture)
+	
+	CaptureType.recreate_initial_state(recreated, node_initial_state)
+	
+	return recreated
 
 
 func build_state_animation(animation: Animation) -> void:

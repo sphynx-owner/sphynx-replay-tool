@@ -4,7 +4,12 @@ class_name NodeCapture
 
 static func capture_node(node: Node) -> Variant:
 	var packed_scene := PackedScene.new()
+	
+	if node is InstancePlaceholder:
+		return packed_scene.pack(Node.new())
+	
 	packed_scene.pack(node)
+	
 	return packed_scene
 
 
@@ -28,11 +33,15 @@ static func recreate_node(state: Variant) -> Node:
 	return recreated_node
 
 
-static func recreate_initial_state(initial_state: Variant) -> void:
+static func recreate_initial_state(node: Node, initial_state: Variant) -> void:
 	pass
 
 
 static func build_state_animation(animation: Animation, node_record: NodeRecord) -> void:
+	if is_equal_approx(node_record.spawn_time, 0.0) \
+	and (is_equal_approx(node_record.despawn_time, animation.length) || node_record.despawn_time > animation.length):
+		return
+	
 	var visibility_track: int = animation.find_track(NodePath(":visible"), Animation.TYPE_VALUE)
 	
 	if visibility_track == -1:
@@ -47,5 +56,5 @@ static func build_state_animation(animation: Animation, node_record: NodeRecord)
 	if !is_equal_approx(node_record.spawn_time, 0.0):
 		animation.track_insert_key(visibility_track, 0.0, false)
 	
-	if !is_equal_approx(node_record.despawn_time, animation.length):
+	if !(is_equal_approx(node_record.despawn_time, animation.length) || node_record.despawn_time > animation.length):
 		animation.track_insert_key(visibility_track, node_record.despawn_time, false)
