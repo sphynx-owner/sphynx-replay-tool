@@ -23,6 +23,10 @@ func stop_recording() -> void:
 	current_scene_record.close_recording()
 
 
+func is_recording() -> bool:
+	return !!current_scene_record and current_scene_record.state == SceneRecord.State.RECORDING
+
+
 func _on_record_finished() -> void:
 	var temp_record: SceneRecord = current_scene_record
 	

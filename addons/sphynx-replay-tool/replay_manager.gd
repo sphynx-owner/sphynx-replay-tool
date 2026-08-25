@@ -2,8 +2,6 @@
 class_name ReplayManager
 extends Node
 
-enum State {NONE, RECORDING, REPLAYING}
-
 @export var record_button: Button
 
 @export var replay_button: Button
@@ -22,10 +20,7 @@ enum State {NONE, RECORDING, REPLAYING}
 
 @export var replay_viewport: SubViewport
 
-var current_recording: SceneRecord
-
-var current_state: State = State.NONE
-
+@export var file_dialog: FileDialog
 
 @export_tool_button("test_replay") var test_replay = _test_replay
 
@@ -38,6 +33,14 @@ var current_state: State = State.NONE
 @export_tool_button("test stop") var test_stop = _test_stop
 
 @export_tool_button("test seek") var test_seek = _test_seek
+
+var current_recording: SceneRecord:
+	set(value):
+		current_recording = value
+		
+		_update_button_disabled_state()
+
+var is_replaying: bool = false
 
 
 func _test_replay() -> void:
@@ -78,29 +81,32 @@ func _ready() -> void:
 func _on_record_button_toggled(toggled_on: bool) -> void:
 	if toggled_on:
 		_start_recording()
-		replay_button.disabled = true
-		save_button.disabled = true
-		load_button.disabled = true
 		
 	else:
 		_stop_recording()
-		replay_button.disabled = false
-		save_button.disabled = false
-		load_button.disabled = false
+	
+	_update_button_disabled_state()
 
 
 func _on_replay_button_toggled(toggled_on: bool) -> void:
 	if toggled_on:
 		if !_start_replay():
 			replay_button.set_pressed_no_signal(false)
-			
 			return
-		
-		record_button.disabled = true
 		
 	else:
 		_stop_replay()
-		record_button.disabled = false
+	
+	_update_button_disabled_state()
+
+
+func _update_button_disabled_state() -> void:
+	var recording: bool = recorder.is_recording()
+	
+	replay_button.disabled = recording or !current_recording
+	save_button.disabled = recording
+	load_button.disabled = recording
+	record_button.disabled = is_replaying
 
 
 func _start_recording() -> void:
@@ -127,6 +133,8 @@ func _start_replay() -> bool:
 	
 	replayer.load_replay(current_recording)
 	
+	is_replaying = true
+	
 	return true
 
 
@@ -137,14 +145,31 @@ func _stop_replay() -> void:
 	replay_subviewport_container.release_focus()
 	
 	replayer.unload_replay()
+	
+	is_replaying = false
 
 
 func _on_save_button_pressed() -> void:
+	file_dialog.file_mode = FileDialog.FILE_MODE_SAVE_FILE
+	file_dialog.popup_centered()
+	
+	file_dialog.file_selected.connect(_on_file_save_selected, CONNECT_ONE_SHOT)
+
+
+func _on_file_save_selected(file: String) -> void:
 	ResourceSaver.save(
 		current_recording, 
-		"res://addons/sphynx-replay-tool/temp/temp_scene_record.tres", 
+		file, 
 		ResourceSaver.SaverFlags.FLAG_REPLACE_SUBRESOURCE_PATHS)
 
 
 func _on_load_button_pressed() -> void:
-	current_recording = ResourceLoader.load("res://addons/sphynx-replay-tool/temp/temp_scene_record.tres")
+	file_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+	
+	file_dialog.popup_centered()
+	
+	file_dialog.file_selected.connect(_on_file_load_selected, CONNECT_ONE_SHOT)
+
+
+func _on_file_load_selected(file: String) -> void:
+	current_recording = ResourceLoader.load(file)

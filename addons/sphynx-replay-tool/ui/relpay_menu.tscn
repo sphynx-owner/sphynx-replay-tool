@@ -5,7 +5,7 @@
 [ext_resource type="Script" uid="uid://bcksmwxwkpkw8" path="res://addons/sphynx-replay-tool/classes/replayer.gd" id="3_rwxun"]
 [ext_resource type="PackedScene" uid="uid://b22qmpkn7lgib" path="res://addons/sphynx-replay-tool/ui/replay_controller.tscn" id="3_vmgy4"]
 
-[node name="Control" type="Control" unique_id=937283115 node_paths=PackedStringArray("record_button", "replay_button", "save_button", "load_button", "replay_controller", "recorder", "replayer", "replay_subviewport_container", "replay_viewport")]
+[node name="Control" type="Control" unique_id=937283115 node_paths=PackedStringArray("record_button", "replay_button", "save_button", "load_button", "replay_controller", "recorder", "replayer", "replay_subviewport_container", "replay_viewport", "file_dialog")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -23,6 +23,7 @@ recorder = NodePath("Recorder")
 replayer = NodePath("SubViewportContainer/ReplayViewport/Replayer")
 replay_subviewport_container = NodePath("SubViewportContainer")
 replay_viewport = NodePath("SubViewportContainer/ReplayViewport")
+file_dialog = NodePath("FileDialog")
 
 [node name="SubViewportContainer" type="SubViewportContainer" parent="." unique_id=1465632531]
 visible = false
@@ -97,3 +98,6 @@ replayer = NodePath("../../../../SubViewportContainer/ReplayViewport/Replayer")
 [node name="Recorder" type="Node" parent="." unique_id=364745047]
 script = ExtResource("2_lrmc6")
 metadata/_custom_type_script = "uid://crn1h6ololsrb"
+
+[node name="FileDialog" type="FileDialog" parent="." unique_id=1161867314]
+filters = PackedStringArray("*.tres")
