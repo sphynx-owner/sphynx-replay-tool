@@ -20,8 +20,10 @@ extends Resource
 ## ordered by the frame in which they were captured
 @export_storage var states: Array[Variant]
 
-var _scene_record: SceneRecord
-var _node: Node
+var scene_record: SceneRecord
+
+var recorded_node: Node
+
 var _is_recording: bool = false
 
 
@@ -31,36 +33,30 @@ static func create(scene_record: SceneRecord, node: Node) -> NodeRecord:
 
 func _init(p_capture_type: GDScript = null, p_scene_record: SceneRecord = null, p_node: Node = null, p_is_recording := false) -> void:
 	CaptureType = p_capture_type
-	_scene_record = p_scene_record
-	_node = p_node
+	scene_record = p_scene_record
+	recorded_node = p_node
+	
 	_is_recording = p_is_recording
 
 
 func capture_node_initial_state() -> void:
 	assert(_is_recording, "node record is not actively recording")
 	
-	node_capture = CaptureType.capture_node(_node)
-	node_initial_state = CaptureType.capture_initial_state(_node)
-	spawn_time = _scene_record.get_local_time()
+	node_capture = CaptureType.capture_node(recorded_node)
+	node_initial_state = CaptureType.capture_initial_state(recorded_node)
+	spawn_time = scene_record.get_local_time()
 
 
 func capture_node_frame_info() -> void:
 	assert(_is_recording, "node record is not actively recording")
 	
-	var state: Variant = CaptureType.capture_state(_node)
-	
-	if state == null:
-		return
-	
-	states.append(state)
-	
-	times.append(_scene_record.get_local_time())
+	CaptureType.capture_state(self)
 
 
 func close_node_record() -> void:
 	assert(_is_recording, "node record is not actively recording")
 	
-	despawn_time = _scene_record.get_local_time()
+	despawn_time = scene_record.get_local_time()
 
 
 func recreate_node() -> Node:

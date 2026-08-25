@@ -17,8 +17,8 @@ static func capture_initial_state(node: Node) -> Variant:
 	return null
 
 
-static func capture_state(node: Node) -> Variant:
-	return null
+static func capture_state(node_record: NodeRecord) -> void:
+	pass
 
 
 static func recreate_node(state: Variant) -> Node:
