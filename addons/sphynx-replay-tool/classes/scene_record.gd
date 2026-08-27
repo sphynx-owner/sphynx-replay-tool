@@ -60,10 +60,10 @@ func start_recording():
 	_record_start_time = ReplayUtils.get_time()
 	
 	if _record_root is Viewport:
-		viewport_size = _record_root.size
+		viewport_size = _record_root.get_texture().get_size()
 		
 	else:
-		viewport_size = ReplayUtils.safe_get_viewport(_record_root).size
+		viewport_size = ReplayUtils.safe_get_viewport(_record_root).get_texture().get_size()
 	
 	_record_root.get_tree().node_added.connect(_on_node_added)
 	_record_root.get_tree().node_removed.connect(_on_node_removed)
